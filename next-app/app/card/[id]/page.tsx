@@ -3,6 +3,7 @@
 import React, { useState, useEffect, use } from 'react';
 import { Mail, Phone, Globe, Download, MapPin, Award, Briefcase, Users, Link as LinkIcon, AlertCircle, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import './card-view.css';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -264,110 +265,175 @@ export default function PublicCardViewPage({ params }: PageProps) {
   const logoUrl = card.designData?.images?.logo?.url;
   const fieldsList = card.designData?.fields || [];
 
+  const customization = {
+    profileShape: "circle",
+    profileBorder: "white",
+    coverRatio: "16-9",
+    profilePosition: "overlap",
+    logoPosition: "hidden",
+    logoSize: 100,
+    cardTemplate: "modern",
+    typography: "DM Sans",
+    cardRadius: 20,
+    buttonStyle: "solid",
+    backgroundEffect: "solid",
+    cardTheme: "light",
+    animations: {
+      floating: false,
+      "gradient-movement": false,
+      "glow-effects": false,
+      "hover-effects": true,
+      "smooth-transitions": true,
+      "pulse-effects": false,
+      entrance: true
+    },
+    ...(card.designData?.customization || {})
+  };
+
+  const DARK_BG_EFFECTS = ["premium-luxury", "floating-particles", "mesh"];
+  const isDarkTheme = customization.cardTheme === "dark" || DARK_BG_EFFECTS.includes(customization.backgroundEffect);
+  const themeClass = isDarkTheme ? "theme-dark" : "theme-light";
+
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#1C1410] font-sans antialiased py-12 px-4 flex flex-col items-center justify-center relative">
       {/* Decorative background glows */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 h-96 w-96 rounded-full bg-[#6B1A2A]/5 blur-3xl pointer-events-none" />
       
-      {/* Main card viewport wrapper */}
-      <div className="relative z-10 w-full max-w-[340px] bg-white rounded-[40px] shadow-2xl border-4 border-[#1C1410] overflow-hidden flex flex-col aspect-[320/650] max-h-[660px]">
-        
-        {/* Cover Photo */}
-        <div 
-          className="relative h-[190px] bg-cover bg-center overflow-hidden shrink-0"
-          style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : {
-            background: customGradient
-          }}
-        >
-          {/* Swirl Overlay */}
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 300 155\'%3E%3Cpath d=\'M-20 100 Q60 30 140 90 T300 70\' stroke=\'rgba(255,255,255,.18)\' stroke-width=\'28\' fill=\'none\'/%3E%3Cpath d=\'M-20 130 Q80 60 180 110 T320 90\' stroke=\'rgba(255,255,255,.10)\' stroke-width=\'20\' fill=\'none\'/%3E%3Cpath d=\'M50 -10 Q120 50 80 120 T100 160\' stroke=\'rgba(255,200,180,.15)\' stroke-width=\'35\' fill=\'none\'/%3E%3C/svg%3E')] bg-center bg-cover opacity-60 pointer-events-none" />
-        </div>
-
-        {/* Profile Avatar */}
-        <div className="relative w-[92px] h-[92px] margin-avatar border-4 border-white bg-white rounded-full overflow-hidden shadow-md shrink-0">
-          {profileUrl ? (
-            <img src={profileUrl} alt={card.fullName} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-[#F2EDE6] flex items-center justify-center text-[#7A6860]">
-              {renderIcon('user', { className: 'w-10 h-10' })}
-            </div>
-          )}
-        </div>
-
-        {/* Card Content Body */}
-        <div className="flex-1 overflow-y-auto px-5 py-3 custom-scrollbar">
-          <h2 className="font-serif text-2xl font-bold tracking-tight text-[#1C1410]">{card.fullName}</h2>
-          
-          {(card.jobTitle || card.company) && (
-            <p className="text-xs text-[#7A6860] font-semibold mt-1">
-              {[card.jobTitle, card.company].filter(Boolean).join(' · ')}
-            </p>
-          )}
-
-          {card.department && (
-            <p className="text-[11px] text-[#9A8880] font-medium mt-0.5">{card.department}</p>
-          )}
-
-          {/* Render List of Fields */}
-          <div className="space-y-3 mt-5 pb-6">
-            {fieldsList
-              .filter((f: any) => f.type !== 'jobTitle' && f.type !== 'companyName' && f.type !== 'department')
-              .map((f: any) => {
-                const isSocial = ['linkedin', 'instagram', 'x', 'facebook', 'youtube', 'tiktok'].includes(f.type);
-                const isMsg = ['whatsapp', 'telegram', 'discord', 'skype', 'signal'].includes(f.type);
+      <div className={`phone-frame ${Object.entries(customization.animations || {}).map(([k, v]) => v ? `anim-${k}` : '').join(' ')}`.trim()} style={{ width: '100%', maxWidth: '340px' }}>
+        <div className={`phone-screen-wrap ${customization.animations?.['gradient-movement'] ? 'anim-gradient-movement' : ''}`.trim()}>
+          <div className="phone-screen-inner">
+            
+            {/* Main card viewport wrapper */}
+            <div 
+              className={`phone-screen pos-${customization.profilePosition} ${themeClass}`}
+              style={{ 
+                fontFamily: `"${customization.typography}", -apple-system, sans-serif`, 
+                borderRadius: `${customization.cardRadius}px`,
+                aspectRatio: '320/650',
+                maxHeight: '660px',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+                position: 'relative'
+              }}
+            >
+              <div className="phone-notch" />
+              <div 
+                className={`phone-screen-bg-effect effect-${customization.backgroundEffect}`} 
+                style={{ borderRadius: `${customization.cardRadius}px` }} 
+              />
+              
+              {logoUrl && customization.logoPosition !== 'hidden' && (
+                <div className={`preview-logo-container logo-${customization.logoPosition}`}>
+                  <img 
+                    src={logoUrl} 
+                    alt="logo" 
+                    style={{ 
+                      height: `${Math.round(20 * (customization.logoSize / 100))}px`, 
+                      objectFit: 'contain' 
+                    }} 
+                  />
+                </div>
+              )}
+              
+              {/* Cover Photo */}
+              <div 
+                className={`card-hero ratio-${customization.coverRatio} ${coverUrl ? 'has-cover' : ''}`}
+                style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : {
+                  background: customGradient
+                }}
+              />
+  
+              {/* Profile Avatar */}
+              <div className={`avatar-wrap shape-${customization.profileShape} border-${customization.profileBorder}`}>
+                {profileUrl ? (
+                  <img src={profileUrl} alt={card.fullName} />
+                ) : (
+                  <div className="w-full h-full bg-[#F2EDE6] flex items-center justify-center text-[#7A6860]">
+                    {renderIcon('user', { className: 'w-10 h-10' })}
+                  </div>
+                )}
+              </div>
+  
+              {/* Card Content Body */}
+              <div className="flex-1 overflow-y-auto px-5 py-3 custom-scrollbar" style={{ zIndex: 3, position: 'relative' }}>
+                <h2 className="font-serif text-2xl font-bold tracking-tight text-[#1C1410]">{card.fullName}</h2>
                 
-                let linkHref = '#';
-                if (f.type === 'email') linkHref = `mailto:${f.value}`;
-                else if (f.type === 'phone') linkHref = `tel:${f.countryCode || ''}${f.value}`;
-                else if (f.type === 'companyUrl' || f.type === 'link') {
-                  linkHref = f.value.startsWith('http') ? f.value : `https://${f.value}`;
-                } else if (isSocial || isMsg) {
-                  linkHref = f.value.startsWith('http') ? f.value : `https://${f.value}`;
-                }
-
-                const labelColor = isSocial || isMsg ? (SOCIAL_COLORS[f.type] || brandColor) : brandColor;
-                const iconBgColor = ICON_BG_COLORS[f.type] || '#FAF7F2';
-
-                return (
-                  <a 
-                    key={f.type} 
-                    href={linkHref} 
-                    target={f.type === 'email' || f.type === 'phone' ? undefined : '_blank'} 
-                    className="flex items-center gap-3.5 p-3 rounded-2xl border border-[#E2D9D0]/50 bg-white hover:bg-[#FAF7F2]/50 hover:border-[#6B1A2A]/20 transition-all duration-200 group no-underline"
-                  >
-                    <div 
-                      className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105"
-                      style={{ background: iconBgColor, color: labelColor }}
-                    >
-                      {renderIcon(f.type, { className: 'w-5 h-5' })}
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-[10px] text-[#7A6860] uppercase tracking-wider font-bold leading-none">{f.label || f.type}</span>
-                      <span className="text-xs text-[#1C1410] font-semibold mt-1 truncate leading-none">
-                        {f.countryCode ? `${f.countryCode} ` : ''}
-                        {f.value}
-                        {f.extension ? ` Ext. ${f.extension}` : ''}
-                      </span>
-                    </div>
-                  </a>
-                );
-              })}
+                {(card.jobTitle || card.company) && (
+                  <p className="text-xs text-[#7A6860] font-semibold mt-1">
+                    {[card.jobTitle, card.company].filter(Boolean).join(' · ')}
+                  </p>
+                )}
+  
+                {card.department && (
+                  <p className="text-[11px] text-[#9A8880] font-medium mt-0.5">{card.department}</p>
+                )}
+  
+                {/* Render List of Fields */}
+                <div className="space-y-3 mt-5 pb-6">
+                  {fieldsList
+                    .filter((f: any) => f.type !== 'jobTitle' && f.type !== 'companyName' && f.type !== 'department')
+                    .map((f: any) => {
+                      const isSocial = ['linkedin', 'instagram', 'x', 'facebook', 'youtube', 'tiktok'].includes(f.type);
+                      const isMsg = ['whatsapp', 'telegram', 'discord', 'skype', 'signal'].includes(f.type);
+                      
+                      let linkHref = '#';
+                      if (f.type === 'email') linkHref = `mailto:${f.value}`;
+                      else if (f.type === 'phone') linkHref = `tel:${f.countryCode || ''}${f.value}`;
+                      else if (f.type === 'companyUrl' || f.type === 'link') {
+                        linkHref = f.value.startsWith('http') ? f.value : `https://${f.value}`;
+                      } else if (isSocial || isMsg) {
+                        linkHref = f.value.startsWith('http') ? f.value : `https://${f.value}`;
+                      }
+  
+                      const labelColor = isSocial || isMsg ? (SOCIAL_COLORS[f.type] || brandColor) : brandColor;
+                      const iconBgColor = ICON_BG_COLORS[f.type] || '#FAF7F2';
+  
+                      return (
+                        <a 
+                          key={f.type} 
+                          href={linkHref} 
+                          target={f.type === 'email' || f.type === 'phone' ? undefined : '_blank'} 
+                          className="flex items-center gap-3.5 p-3 rounded-2xl border border-[#E2D9D0]/50 bg-white hover:bg-[#FAF7F2]/50 hover:border-[#6B1A2A]/20 transition-all duration-200 group no-underline"
+                        >
+                          <div 
+                            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-105"
+                            style={{ background: iconBgColor, color: labelColor }}
+                          >
+                            {renderIcon(f.type, { className: 'w-5 h-5' })}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-[10px] text-[#7A6860] uppercase tracking-wider font-bold leading-none">{f.label || f.type}</span>
+                            <span className="text-xs text-[#1C1410] font-semibold mt-1 truncate leading-none">
+                              {f.countryCode ? `${f.countryCode} ` : ''}
+                              {f.value}
+                              {f.extension ? ` Ext. ${f.extension}` : ''}
+                            </span>
+                          </div>
+                        </a>
+                      );
+                    })}
+                </div>
+              </div>
+  
+              {/* Add to Contacts Button */}
+              <div className="p-4 bg-white border-t border-[#E2D9D0]/70 shrink-0" style={{ zIndex: 3, position: 'relative' }}>
+                <button 
+                  onClick={downloadVCard}
+                  className={`w-full text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg active:scale-95 flex items-center justify-center gap-2 border-none phone-share-btn style-${customization.buttonStyle}`}
+                  style={{
+                    background: customization.buttonStyle === 'solid' || customization.buttonStyle === 'dark'
+                      ? `linear-gradient(135deg, ${brandColor}, #1C1410)`
+                      : undefined
+                  }}
+                >
+                  <Download className="w-4 h-4" /> Add to Contacts
+                </button>
+              </div>
+  
+            </div>
           </div>
         </div>
-
-        {/* Add to Contacts Button */}
-        <div className="p-4 bg-white border-t border-[#E2D9D0]/70 shrink-0">
-          <button 
-            onClick={downloadVCard}
-            className="w-full text-white font-bold text-xs uppercase tracking-wider py-4 rounded-2xl shadow-md transition-all duration-300 hover:shadow-lg active:scale-95 flex items-center justify-center gap-2 border-none"
-            style={{
-              background: `linear-gradient(135deg, ${brandColor}, #1C1410)`
-            }}
-          >
-            <Download className="w-4 h-4" /> Add to Contacts
-          </button>
-        </div>
-
       </div>
 
       {/* Powered by Watermark */}

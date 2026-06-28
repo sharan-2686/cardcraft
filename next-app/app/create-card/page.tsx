@@ -320,6 +320,62 @@ const DEFAULT_COVER_URL = 'data:image/svg+xml;charset=utf-8,' + encodeURICompone
 const DEFAULT_LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 52"><text x="2" y="42" font-family="Georgia,serif" font-weight="900" font-size="48" fill="#FF6B6B">CC</text><text x="108" y="38" font-family="Georgia,serif" font-weight="700" font-size="24" fill="#1a1510">CardCraft</text></svg>`;
 const DEFAULT_LOGO_URL = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(DEFAULT_LOGO_SVG);
 
+const VISUAL_STYLE_PRESETS: Record<string, any> = {
+  "modern-profile": {
+    brandColor: "#7C6FF0", gradStart: "#7C6FF0", gradEnd: "#A78BFA",
+    profileShape: "circle", profileBorder: "white", coverRatio: "16-9", profilePosition: "overlap",
+    logoPosition: "hidden", cardTemplate: "modern", typography: "DM Sans", cardRadius: 20,
+    buttonStyle: "solid", backgroundEffect: "gradient", cardTheme: "light"
+  },
+  "corporate-minimal": {
+    brandColor: "#1F2937", gradStart: "#1F2937", gradEnd: "#1F2937",
+    profileShape: "rounded-square", profileBorder: "none", coverRatio: "16-9", profilePosition: "top-left",
+    logoPosition: "top-right", cardTemplate: "executive", typography: "Manrope", cardRadius: 8,
+    buttonStyle: "outline", backgroundEffect: "solid", cardTheme: "light"
+  },
+  "creative-portfolio": {
+    brandColor: "#F97316", gradStart: "#F97316", gradEnd: "#FBBF24",
+    profileShape: "circle", profileBorder: "white", coverRatio: "21-9", profilePosition: "top-right",
+    logoPosition: "top-left", cardTemplate: "creative", typography: "Poppins", cardRadius: 24,
+    buttonStyle: "glass", backgroundEffect: "gradient", cardTheme: "light"
+  },
+  "glassmorphism": {
+    brandColor: "#14B8A6", gradStart: "#14B8A6", gradEnd: "#34D399",
+    profileShape: "circle", profileBorder: "glow", coverRatio: "16-9", profilePosition: "overlap",
+    logoPosition: "top-right", cardTemplate: "modern", typography: "Plus Jakarta Sans", cardRadius: 24,
+    buttonStyle: "glass", backgroundEffect: "glass-blur", cardTheme: "light"
+  },
+  "premium-dark": {
+    brandColor: "#D4AF37", gradStart: "#D4AF37", gradEnd: "#F4D03F",
+    profileShape: "circle", profileBorder: "premium-ring", coverRatio: "4-3", profilePosition: "top-left",
+    logoPosition: "top-right", cardTemplate: "luxury", typography: "Playfair Display", cardRadius: 10,
+    buttonStyle: "dark", backgroundEffect: "premium-luxury", cardTheme: "dark"
+  },
+  "social-creator": {
+    brandColor: "#EC4899", gradStart: "#EC4899", gradEnd: "#F472B6",
+    profileShape: "circle", profileBorder: "white", coverRatio: "1-1", profilePosition: "overlap",
+    logoPosition: "top-left", cardTemplate: "creative", typography: "Poppins", cardRadius: 28,
+    buttonStyle: "gradient", backgroundEffect: "gradient", cardTheme: "light"
+  }
+};
+
+const AI_PRESETS = [
+  {
+    id: 'designer',
+    title: 'Designer Kit',
+    badge: 'Creative',
+    tags: ['Rounded Photo', 'Soft Gradient', 'Glassmorphic', 'Creative Font'],
+    values: { profileShape: "rounded-square", coverRatio: "21-9", cardTemplate: "creative", typography: "Poppins", cardRadius: 24, buttonStyle: "glass", backgroundEffect: "gradient" }
+  },
+  {
+    id: 'business',
+    title: 'Business Elite',
+    badge: 'Corporate',
+    tags: ['Circle Photo', 'Executive Layout', 'Clean Light', 'Solid White'],
+    values: { profileShape: "circle", coverRatio: "16-9", cardTemplate: "executive", typography: "Manrope", cardRadius: 8, buttonStyle: "solid", backgroundEffect: "solid", cardTheme: "light" }
+  }
+];
+
 function hexToHue(hex: string): number {
   hex = hex.replace('#', '');
   if (hex.length === 3) {
@@ -346,6 +402,36 @@ export default function CreateCardPage() {
   const [cardId, setCardId] = useState<string | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const [showAuthGate, setShowAuthGate] = useState(false);
+
+  // Customization Settings
+  const [customization, setCustomization] = useState({
+    profileShape: "circle",
+    profileBorder: "white",
+    coverRatio: "16-9",
+    profilePosition: "overlap",
+    logoPosition: "hidden",
+    logoSize: 100,
+    cardTemplate: "modern",
+    typography: "DM Sans",
+    cardRadius: 20,
+    buttonStyle: "solid",
+    backgroundEffect: "solid",
+    cardTheme: "light",
+    animations: {
+      floating: false,
+      "gradient-movement": false,
+      "glow-effects": false,
+      "hover-effects": true,
+      "smooth-transitions": true,
+      "pulse-effects": false,
+      entrance: true
+    }
+  });
+
+  const [activePreset, setActivePreset] = useState<string>('modern-profile');
+  const [isStyleStudioOpen, setIsStyleStudioOpen] = useState(false);
+  const [activeStyleGroup, setActiveStyleGroup] = useState<string | null>(null);
+  const [activeAccordionItem, setActiveAccordionItem] = useState<string | null>(null);
 
   // Brand Accents
   const [brandColor, setBrandColor] = useState('#FF4D4D');
@@ -445,6 +531,9 @@ export default function CreateCardPage() {
               setGradientStart(ex.designData.brandColor);
               setGradientEnd(ex.designData.brandColor);
             }
+            if (ex.designData?.customization) {
+              setCustomization(ex.designData.customization);
+            }
             if (ex.fullName) {
               const nameParts = ex.fullName.trim().split(/\s+/);
               setFirstName(nameParts[0] || '');
@@ -486,6 +575,9 @@ export default function CreateCardPage() {
           setGradientStart(ex.brandColor);
           setGradientEnd(ex.brandColor);
         }
+        if (ex.customization) {
+          setCustomization(ex.customization);
+        }
         if (ex.name) {
           setFirstName(ex.name.first || '');
           setLastName(ex.name.last || '');
@@ -520,6 +612,9 @@ export default function CreateCardPage() {
             setBrandColor(ex.brandColor);
             setGradientStart(ex.brandColor);
             setGradientEnd(ex.brandColor);
+          }
+          if (ex.designData?.customization) {
+            setCustomization(ex.designData.customization);
           }
           if (ex.name) {
             setFirstName(ex.name.first || '');
@@ -584,6 +679,7 @@ export default function CreateCardPage() {
           cover: { url: coverUrl }
         },
         fields: fieldsList,
+        customization,
       },
     };
 
@@ -598,7 +694,8 @@ export default function CreateCardPage() {
             cover: { url: coverUrl }
           },
           name: { first: firstName, last: lastName },
-          fields: fieldsList
+          fields: fieldsList,
+          customization
         }));
       } catch (e) {
         console.error(e);
@@ -639,7 +736,7 @@ export default function CreateCardPage() {
       saveCard();
     }, 600);
     return () => clearTimeout(timer);
-  }, [brandColor, gradientStart, gradientEnd, firstName, lastName, logoUrl, profileUrl, coverUrl, fields, userId, saveStatus, cardId]);
+  }, [brandColor, gradientStart, gradientEnd, firstName, lastName, logoUrl, profileUrl, coverUrl, fields, userId, saveStatus, cardId, customization]);
 
   // Generate QR Code dynamically client-side
   useEffect(() => {
@@ -767,6 +864,16 @@ export default function CreateCardPage() {
     if (activeUploadTarget.current === 'profile') setProfileUrl(url);
     if (activeUploadTarget.current === 'cover') setCoverUrl(url);
     setSaveStatus('dirty');
+
+    const reader = new FileReader();
+    const target = activeUploadTarget.current;
+    reader.onloadend = () => {
+      const base64data = reader.result as string;
+      if (target === 'logo') setLogoUrl(base64data);
+      if (target === 'profile') setProfileUrl(base64data);
+      if (target === 'cover') setCoverUrl(base64data);
+    };
+    reader.readAsDataURL(file);
   };
 
   const removeImage = (target: 'logo' | 'profile' | 'cover', e: React.MouseEvent) => {
@@ -774,6 +881,74 @@ export default function CreateCardPage() {
     if (target === 'logo') setLogoUrl('');
     if (target === 'profile') setProfileUrl('');
     if (target === 'cover') setCoverUrl('');
+    setSaveStatus('dirty');
+  };
+
+  const updateCustomization = (updates: Partial<typeof customization>) => {
+    setCustomization(prev => {
+      const next = { ...prev, ...updates };
+      setSaveStatus('dirty');
+      return next;
+    });
+  };
+
+  const updateAnimation = (animKey: string, isEnabled: boolean) => {
+    setCustomization(prev => {
+      const next = {
+        ...prev,
+        animations: {
+          ...prev.animations,
+          [animKey]: isEnabled
+        }
+      };
+      setSaveStatus('dirty');
+      return next;
+    });
+  };
+
+  const handleVisualStylePresetClick = (presetKey: string) => {
+    const preset = VISUAL_STYLE_PRESETS[presetKey];
+    if (!preset) return;
+
+    setBrandColor(preset.brandColor);
+    setGradientStart(preset.gradStart);
+    setGradientEnd(preset.gradEnd);
+    setActiveGradientId('');
+    setActiveTemplateId('');
+
+    setCustomization({
+      profileShape: preset.profileShape,
+      profileBorder: preset.profileBorder,
+      coverRatio: preset.coverRatio,
+      profilePosition: preset.profilePosition,
+      logoPosition: preset.logoPosition,
+      logoSize: preset.logoSize || 100,
+      cardTemplate: preset.cardTemplate,
+      typography: preset.typography,
+      cardRadius: preset.cardRadius,
+      buttonStyle: preset.buttonStyle,
+      backgroundEffect: preset.backgroundEffect,
+      cardTheme: preset.cardTheme,
+      animations: {
+        floating: false,
+        "gradient-movement": false,
+        "glow-effects": false,
+        "hover-effects": true,
+        "smooth-transitions": true,
+        "pulse-effects": false,
+        entrance: true
+      }
+    });
+
+    setActivePreset(presetKey);
+    setSaveStatus('dirty');
+  };
+
+  const handleAiPresetClick = (preset: typeof AI_PRESETS[0]) => {
+    setCustomization(prev => ({
+      ...prev,
+      ...preset.values
+    }));
     setSaveStatus('dirty');
   };
 
@@ -1034,79 +1209,129 @@ export default function CreateCardPage() {
         <aside className="preview-pane">
           <div className="phone-scene" ref={phoneSceneRef} onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
             <div className="phone-3d" ref={phoneRef}>
-              <div className="phone-frame">
-                <div className="phone-screen-wrap">
+              <div className={`phone-frame ${Object.entries(customization.animations).map(([k, v]) => v ? `anim-${k}` : '').join(' ')}`.trim()}>
+                <div className={`phone-screen-wrap ${customization.animations['gradient-movement'] ? 'anim-gradient-movement' : ''}`.trim()}>
                   <div className={`phone-screen-inner ${isFlipped ? 'is-flipped' : ''}`}>
 
                     {/* Front Face */}
-                    <div className="phone-screen">
-                      <div className="phone-notch" />
-                      <div className={`card-hero ${coverUrl ? 'has-cover' : ''}`} style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : {}}>
-                        <button onClick={() => triggerUpload('cover')} className="card-hero__edit" title="Edit cover" type="button">
-                          {renderIcon('pencil')}
-                        </button>
-                      </div>
-                      <div onClick={() => triggerUpload('profile')} className="avatar-wrap cursor-pointer">
-                        {profileUrl ? (
-                          <img src={profileUrl} alt="profile" />
-                        ) : (
-                          renderIcon('user')
-                        )}
-                      </div>
-                      <div className="card-body">
-                        <h2 className="preview-name">{[firstName, lastName].filter(Boolean).join(' ') || 'Your name'}</h2>
-                        
-                        {/* Meta Job Title & Company Name */}
-                        {(fields.jobTitle?.value || fields.companyName?.value) && (
-                          <p className="preview-meta">
-                            {[fields.jobTitle?.value, fields.companyName?.value].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                        
-                        <div className="preview-fields">
-                          {Object.entries(fields)
-                            .filter(([k]) => k !== 'jobTitle' && k !== 'companyName')
-                            .map(([key, data]) => {
-                              const conf = getFieldConfig(key);
-                              if (!conf || !data.value) return null;
-                              return (
-                                <div key={key} className="preview-field">
-                                  <span className="preview-field__icon">{renderIcon(conf.icon)}</span>
-                                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                    <span className="preview-field__label">{data.label || conf.label}</span>
-                                    <span className="preview-field__value">
-                                      {data.countryCode ? `${data.countryCode} ` : ''}
-                                      {data.value}
-                                      {data.extension ? ` Ext. ${data.extension}` : ''}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-                            })}
+                    {(() => {
+                      const DARK_BG_EFFECTS = ["premium-luxury", "floating-particles", "mesh"];
+                      const isDarkTheme = customization.cardTheme === "dark" || DARK_BG_EFFECTS.includes(customization.backgroundEffect);
+                      const themeClass = isDarkTheme ? "theme-dark" : "theme-light";
+                      const phoneScreenClass = `phone-screen pos-${customization.profilePosition} ${themeClass}`;
+                      const customGradient = (activeGradientId || activeTemplateId) && gradientStart && gradientEnd
+                        ? `linear-gradient(150deg, ${gradientStart} 0%, ${gradientEnd} 100%)`
+                        : brandColor;
+
+                      return (
+                        <div 
+                          className={phoneScreenClass} 
+                          style={{ 
+                            fontFamily: `"${customization.typography}", -apple-system, sans-serif`, 
+                            borderRadius: `${customization.cardRadius}px` 
+                          }}
+                        >
+                          <div className="phone-notch" />
+                          <div 
+                            className={`phone-screen-bg-effect effect-${customization.backgroundEffect}`} 
+                            style={{ borderRadius: `${customization.cardRadius}px` }} 
+                          />
+                          {logoUrl && customization.logoPosition !== 'hidden' && (
+                            <div className={`preview-logo-container logo-${customization.logoPosition}`}>
+                              <img 
+                                src={logoUrl} 
+                                alt="logo" 
+                                style={{ 
+                                  height: `${Math.round(20 * (customization.logoSize / 100))}px`, 
+                                  objectFit: 'contain' 
+                                }} 
+                              />
+                            </div>
+                          )}
+                          <div 
+                            className={`card-hero ratio-${customization.coverRatio} ${coverUrl ? 'has-cover' : ''}`} 
+                            style={coverUrl ? { backgroundImage: `url(${coverUrl})` } : { background: customGradient }}
+                          >
+                            <button onClick={() => triggerUpload('cover')} className="card-hero__edit" title="Edit cover" type="button">
+                              {renderIcon('pencil')}
+                            </button>
+                          </div>
+                          <div onClick={() => triggerUpload('profile')} className={`avatar-wrap cursor-pointer shape-${customization.profileShape} border-${customization.profileBorder}`}>
+                            {profileUrl ? (
+                              <img src={profileUrl} alt="profile" />
+                            ) : (
+                              renderIcon('user')
+                            )}
+                          </div>
+                          <div className="card-body">
+                            <h2 className="preview-name">{[firstName, lastName].filter(Boolean).join(' ') || 'Your name'}</h2>
+                            
+                            {/* Meta Job Title & Company Name */}
+                            {(fields.jobTitle?.value || fields.companyName?.value) && (
+                              <p className="preview-meta">
+                                {[fields.jobTitle?.value, fields.companyName?.value].filter(Boolean).join(' · ')}
+                              </p>
+                            )}
+                            
+                            <div className="preview-fields">
+                              {Object.entries(fields)
+                                .filter(([k]) => k !== 'jobTitle' && k !== 'companyName' && k !== 'department' && k !== 'headline')
+                                .map(([key, data]) => {
+                                  const conf = getFieldConfig(key);
+                                  if (!conf || !data.value) return null;
+                                  return (
+                                    <div key={key} className="preview-field">
+                                      <span className="preview-field__icon">{renderIcon(conf.icon)}</span>
+                                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                        <span className="preview-field__label">{data.label || conf.label}</span>
+                                        <span className="preview-field__value">
+                                          {data.countryCode ? `${data.countryCode} ` : ''}
+                                          {data.value}
+                                          {data.extension ? ` Ext. ${data.extension}` : ''}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                          </div>
+                          
+                          <button onClick={() => setIsFlipped(true)} className={`phone-share-btn style-${customization.buttonStyle}`} type="button">
+                            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 9l-4-4-4 4M10 5v10" />
+                            </svg>
+                            Share Card
+                          </button>
                         </div>
-                      </div>
-                      
-                      <button onClick={() => setIsFlipped(true)} className="phone-share-btn" type="button">
-                        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 9l-4-4-4 4M10 5v10" />
-                        </svg>
-                        Share Card
-                      </button>
-                    </div>
+                      );
+                    })()}
 
                     {/* Back Face (QR Code) */}
-                    <div className="phone-back">
-                      <span className="phone-back-label">Scan to connect</span>
-                      <div className="qr-ph" onClick={() => setIsFlipped(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', cursor: 'pointer', overflow: 'hidden', padding: 4 }}>
-                        {qrDataUrl ? (
-                          <img src={qrDataUrl} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                        ) : (
-                          <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>Generating...</span>
-                        )}
-                      </div>
-                      <p className="phone-back-name">{[firstName, lastName].filter(Boolean).join(' ') || 'Your name'}</p>
-                      <p className="phone-back-tagline">Share your card with anyone, instantly.</p>
-                    </div>
+                    {(() => {
+                      const DARK_BG_EFFECTS = ["premium-luxury", "floating-particles", "mesh"];
+                      const isDarkTheme = customization.cardTheme === "dark" || DARK_BG_EFFECTS.includes(customization.backgroundEffect);
+                      const themeClass = isDarkTheme ? "theme-dark" : "theme-light";
+                      return (
+                        <div 
+                          className={`phone-back ${themeClass}`}
+                          style={{ 
+                            fontFamily: `"${customization.typography}", -apple-system, sans-serif`, 
+                            borderRadius: `${customization.cardRadius}px` 
+                          }}
+                        >
+                          <span className="phone-back-label">Scan to connect</span>
+                          <div className="qr-ph" onClick={() => setIsFlipped(false)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#fff', cursor: 'pointer', overflow: 'hidden', padding: 4 }}>
+                            {qrDataUrl ? (
+                              <img src={qrDataUrl} alt="QR Code" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                            ) : (
+                              <span style={{ fontSize: 10, color: 'var(--ink-3)' }}>Generating...</span>
+                            )}
+                          </div>
+                          <p className="phone-back-name">{[firstName, lastName].filter(Boolean).join(' ') || 'Your name'}</p>
+                          <p className="phone-back-tagline">Share your card with anyone, instantly.</p>
+                        </div>
+                      );
+                    })()}
 
                   </div>
                 </div>
@@ -1170,185 +1395,1073 @@ export default function CreateCardPage() {
               </div>
             )}
           </div>
-
           {/* STEP 1: Photos */}
           {currentStep === 1 && (
             <div className="step-panel is-active">
-              <div className="upload-panel">
-                <div className="upload-panel__label">Add Images</div>
-                <div className="image-tiles">
-
-                  {/* Company Logo */}
-                  <div className="image-tile" data-image="logo" onClick={() => triggerUpload('logo')}>
-                    <div className="image-tile__top">
-                      <div className="image-tile__icon-wrap">
-                        {renderIcon('briefcase')}
-                      </div>
-                      <div className="image-tile__name">Company Logo</div>
-                      <div className="image-tile__desc">Upload your company logo in PNG, JPG or SVG format.</div>
+              <div className="studio-layout">
+                {/* Center Panel: Customization Studio Controls */}
+                <div className="studio-center">
+                  
+                  {/* Section 0: Visual Style Presets */}
+                  <div className="studio-section">
+                    <div className="studio-section__header">
+                      <span className="studio-section__title">🎨 Visual Style Presets</span>
                     </div>
-                    <div className="image-tile__drop">
-                      {renderIcon('plus')}
-                      <span className="image-tile__drop-text">Drag &amp; drop or click to upload</span>
-                      <span className="image-tile__drop-sub">Max size: 5MB</span>
+                    <p className="studio-section__desc">
+                      Select a visual style to instantly transform your card and unlock tailored customization options.
+                    </p>
+                    <div className="vstyle-grid">
+                      {[
+                        { id: 'modern-profile', name: 'Modern Profile', desc: 'Perfect for personal branding and professionals.', thumbClass: 'modern' },
+                        { id: 'corporate-minimal', name: 'Corporate Minimal', desc: 'Professional corporate business identity.', thumbClass: 'corporate' },
+                        { id: 'creative-portfolio', name: 'Creative Portfolio', desc: 'Ideal for designers, artists and freelancers.', thumbClass: 'creative' },
+                        { id: 'glassmorphism', name: 'Glassmorphism', desc: 'Modern glass UI with premium visual depth.', thumbClass: 'glass' },
+                        { id: 'premium-dark', name: 'Premium Dark', desc: 'Luxury dark theme for executives and founders.', thumbClass: 'dark' },
+                        { id: 'social-creator', name: 'Social Creator', desc: 'Built for creators, influencers and content brands.', thumbClass: 'social' }
+                      ].map((item) => (
+                        <div 
+                          key={item.id} 
+                          onClick={() => handleVisualStylePresetClick(item.id)} 
+                          className={`vstyle-card ${activePreset === item.id ? 'is-selected' : ''}`}
+                        >
+                          <div className={`vstyle-thumb vstyle-thumb--${item.thumbClass}`}>
+                            {item.id === 'modern-profile' && (
+                              <>
+                                <span className="vstyle-avatar" />
+                                <span className="vstyle-bar vstyle-bar--a" />
+                                <span className="vstyle-bar vstyle-bar--b" />
+                                <span className="vstyle-bar vstyle-bar--c" />
+                              </>
+                            )}
+                            {item.id === 'corporate-minimal' && (
+                              <>
+                                <span className="vstyle-logo-sq" />
+                                <span className="vstyle-bar vstyle-bar--a" />
+                                <span className="vstyle-bar vstyle-bar--b" />
+                              </>
+                            )}
+                            {item.id === 'creative-portfolio' && (
+                              <>
+                                <span className="vstyle-badge">PORTFOLIO</span>
+                                <span className="vstyle-circle-tr" />
+                                <span className="vstyle-bar vstyle-bar--white-a" />
+                                <span className="vstyle-bar vstyle-bar--white-b" />
+                              </>
+                            )}
+                            {item.id === 'glassmorphism' && (
+                              <>
+                                <span className="vstyle-blob" />
+                                <span className="vstyle-glass-panel">
+                                  <span className="vstyle-bar vstyle-bar--white-a" />
+                                  <span className="vstyle-bar vstyle-bar--white-b" />
+                                </span>
+                              </>
+                            )}
+                            {item.id === 'premium-dark' && (
+                              <>
+                                <span className="vstyle-avatar-ring" />
+                                <span className="vstyle-check">
+                                  <svg viewBox="0 0 14 14" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M3 7l3 3 5-6" />
+                                  </svg>
+                                </span>
+                                <span className="vstyle-bar vstyle-bar--gold" />
+                                <span className="vstyle-bar vstyle-bar--gray" />
+                                <span className="vstyle-bar vstyle-bar--gray2" />
+                              </>
+                            )}
+                            {item.id === 'social-creator' && (
+                              <>
+                                <span className="vstyle-avatar" />
+                                <span className="vstyle-bar vstyle-bar--white-a" />
+                                <span className="vstyle-connect-btn">Connect</span>
+                              </>
+                            )}
+                          </div>
+                          <div className="vstyle-info">
+                            <p className="vstyle-name">{item.name}</p>
+                            <p className="vstyle-desc">{item.desc}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                    {logoUrl && logoUrl !== DEFAULT_LOGO_URL && (
-                      <div className="image-tile__preview has-img">
-                        <img src={logoUrl} alt="Logo" />
-                        <button onClick={(e) => removeImage('logo', e)} className="image-tile__remove" type="button">×</button>
-                      </div>
-                    )}
                   </div>
 
-                  {/* Profile Photo */}
-                  <div className="image-tile" data-image="profile" onClick={() => triggerUpload('profile')}>
-                    <div className="image-tile__top">
-                      <div className="image-tile__icon-wrap">
-                        {renderIcon('user')}
-                      </div>
-                      <div className="image-tile__name">Profile Photo</div>
-                      <div className="image-tile__desc">Upload a professional profile photo for your card.</div>
+                  {/* Section 1: Image Uploads */}
+                  <div className="studio-section">
+                    <div className="studio-section__header">
+                      <span className="studio-section__title">✦ Create Your Identity</span>
                     </div>
-                    <div className="image-tile__drop">
-                      {renderIcon('plus')}
-                      <span className="image-tile__drop-text">Drag &amp; drop or click to upload</span>
-                      <span className="image-tile__drop-sub">Max size: 5MB</span>
-                    </div>
-                    {profileUrl && (
-                      <div className="image-tile__preview image-tile__preview--circle has-img">
-                        <img src={profileUrl} alt="Profile" />
-                        <button onClick={(e) => removeImage('profile', e)} className="image-tile__remove" type="button">×</button>
+                    <p className="studio-section__desc">
+                      Add a cover image, profile photo and logo. Just click or drag an image onto any area below.
+                    </p>
+
+                    <div className="image-tiles">
+                      {/* Profile Photo */}
+                      <div className="image-tile" id="tile-profile" onClick={() => triggerUpload('profile')}>
+                        <div className="image-tile__frame" id="preview-profile">
+                          {profileUrl ? (
+                            <img id="preview-profile-img" src={profileUrl} alt="Profile" />
+                          ) : (
+                            <div className="image-tile__placeholder">
+                              <div className="image-tile__icon-wrap">
+                                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M10 10a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4z" />
+                                  <path d="M4 16.5c.7-3 3-4.5 6-4.5s5.3 1.5 6 4.5" />
+                                </svg>
+                              </div>
+                              <span className="image-tile__placeholder-text">+ Add Profile Photo</span>
+                            </div>
+                          )}
+                          {profileUrl && (
+                            <>
+                              <div className="image-tile__overlay">
+                                <span className="image-tile__overlay-text">Replace photo</span>
+                              </div>
+                              <button 
+                                className="image-tile__remove" 
+                                id="remove-profile" 
+                                type="button"
+                                aria-label="Remove profile photo"
+                                onClick={(e) => removeImage('profile', e)}
+                              >
+                                <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <path d="M3 3l8 8M11 3l-8 8" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        <div className="image-tile__meta">
+                          <p className="image-tile__name">Profile Photo</p>
+                          <div className="image-tile__status">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 8.5l3.2 3.2L13 4.5" />
+                            </svg>
+                            {profileUrl ? (
+                              <span className="image-tile__status-label--added">Added</span>
+                            ) : (
+                              <span className="image-tile__status-label--empty">5MB limit</span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
+
+                      {/* Company Logo */}
+                      <div className="image-tile" id="tile-logo" onClick={() => triggerUpload('logo')}>
+                        <div className="image-tile__frame" id="preview-logo">
+                          {logoUrl && logoUrl !== DEFAULT_LOGO_URL ? (
+                            <img id="preview-logo-img" src={logoUrl} alt="Logo" />
+                          ) : (
+                            <div className="image-tile__placeholder">
+                              <div className="image-tile__icon-wrap">
+                                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="2.5" y="4.5" width="15" height="11" rx="1.5" />
+                                  <path d="M6 8.5h2M6 11.5h6M10 8.5h4" />
+                                </svg>
+                              </div>
+                              <span className="image-tile__placeholder-text">+ Add Brand Logo</span>
+                            </div>
+                          )}
+                          {logoUrl && logoUrl !== DEFAULT_LOGO_URL && (
+                            <>
+                              <div className="image-tile__overlay">
+                                <span className="image-tile__overlay-text">Replace logo</span>
+                              </div>
+                              <button 
+                                className="image-tile__remove" 
+                                id="remove-logo" 
+                                type="button"
+                                aria-label="Remove logo"
+                                onClick={(e) => removeImage('logo', e)}
+                              >
+                                <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <path d="M3 3l8 8M11 3l-8 8" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        <div className="image-tile__meta">
+                          <p className="image-tile__name">Company Logo</p>
+                          <div className="image-tile__status">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 8.5l3.2 3.2L13 4.5" />
+                            </svg>
+                            {logoUrl && logoUrl !== DEFAULT_LOGO_URL ? (
+                              <span className="image-tile__status-label--added">Added</span>
+                            ) : (
+                              <span className="image-tile__status-label--empty">PNG, SVG</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Cover Image */}
+                      <div className="image-tile" id="tile-cover" onClick={() => triggerUpload('cover')}>
+                        <div className="image-tile__frame" id="preview-cover">
+                          {coverUrl && coverUrl !== DEFAULT_COVER_URL ? (
+                            <img id="preview-cover-img" src={coverUrl} alt="Cover" />
+                          ) : (
+                            <div className="image-tile__placeholder">
+                              <div className="image-tile__icon-wrap">
+                                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                  <rect x="2.5" y="4.5" width="15" height="11" rx="1.5" />
+                                  <path d="M2.5 13l4-4 3 3 2.5-2.5 5.5 5" />
+                                  <circle cx="6.5" cy="8" r="1.2" />
+                                </svg>
+                              </div>
+                              <span className="image-tile__placeholder-text">+ Add Cover Image</span>
+                            </div>
+                          )}
+                          {coverUrl && coverUrl !== DEFAULT_COVER_URL && (
+                            <>
+                              <div className="image-tile__overlay">
+                                <span className="image-tile__overlay-text">Replace cover</span>
+                              </div>
+                              <button 
+                                className="image-tile__remove" 
+                                id="remove-cover" 
+                                type="button"
+                                aria-label="Remove cover photo"
+                                onClick={(e) => removeImage('cover', e)}
+                              >
+                                <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                                  <path d="M3 3l8 8M11 3l-8 8" />
+                                </svg>
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        <div className="image-tile__meta">
+                          <p className="image-tile__name">Cover Banner</p>
+                          <div className="image-tile__status">
+                            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M3 8.5l3.2 3.2L13 4.5" />
+                            </svg>
+                            {coverUrl && coverUrl !== DEFAULT_COVER_URL ? (
+                              <span className="image-tile__status-label--added">Added</span>
+                            ) : (
+                              <span className="image-tile__status-label--empty">10MB limit</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileChange} 
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml" 
+                      hidden 
+                    />
                   </div>
 
-                  {/* Cover Photo */}
-                  <div className="image-tile" data-image="cover" onClick={() => triggerUpload('cover')}>
-                    <div className="image-tile__top">
-                      <div className="image-tile__icon-wrap">
-                        {renderIcon('globe')}
+                  {/* ✨ More Styles — Card Style Studio toggle */}
+                  <button 
+                    onClick={() => setIsStyleStudioOpen(!isStyleStudioOpen)}
+                    className="style-studio-toggle" 
+                    id="styleStudioToggle" 
+                    type="button" 
+                    aria-expanded={isStyleStudioOpen}
+                  >
+                    <span className="style-studio-toggle__sparkle">✨</span>
+                    <span>{isStyleStudioOpen ? 'Fewer Styles' : 'More Styles'}</span>
+                    <svg 
+                      className={`chev ${isStyleStudioOpen ? 'rotate-180' : ''}`} 
+                      viewBox="0 0 20 20" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      style={{ transform: isStyleStudioOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                    >
+                      <path d="M5 7.5l5 5 5-5" />
+                    </svg>
+                  </button>
+
+                  {/* Card Style Studio — collapsible accordion panel */}
+                  {isStyleStudioOpen && (
+                    <div className="style-studio-panel" id="styleStudioPanel" style={{ display: 'block' }}>
+                      <div className="style-studio-card">
+                        <div className="style-studio-card__header">
+                          <span className="style-studio-card__title">Card Style Studio</span>
+                          <span className="style-studio-card__badge">Live preview</span>
+                        </div>
+
+                        {/* Style Group: Layout */}
+                        <div className={`style-group ${activeStyleGroup === 'layout' ? 'is-active' : ''}`}>
+                          <button 
+                            className="style-group__header" 
+                            type="button" 
+                            onClick={() => setActiveStyleGroup(activeStyleGroup === 'layout' ? null : 'layout')}
+                            aria-expanded={activeStyleGroup === 'layout'}
+                          >
+                            <span className="style-group__icon">
+                              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="3" y="3" width="14" height="6" rx="1.5" />
+                                <rect x="3" y="11" width="6" height="6" rx="1.5" />
+                                <rect x="11" y="11" width="6" height="6" rx="1.5" />
+                              </svg>
+                            </span>
+                            <span className="style-group__text">
+                              <span className="style-group__title">Layout</span>
+                              <span className="style-group__current">Cover &amp; profile</span>
+                            </span>
+                            <svg 
+                              className="style-group__chev" 
+                              viewBox="0 0 20 20" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                              style={{ transform: activeStyleGroup === 'layout' ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+                            >
+                              <path d="M5 7.5l5 5 5-5" />
+                            </svg>
+                          </button>
+                          
+                          {activeStyleGroup === 'layout' && (
+                            <div className="style-group__body" style={{ display: 'block' }}>
+                              
+                              {/* Accordion Ratio */}
+                              <div className={`accordion-item ${activeAccordionItem === 'ratio' ? 'is-open' : ''}`}>
+                                <button 
+                                  className="accordion-header" 
+                                  type="button"
+                                  onClick={() => setActiveAccordionItem(activeAccordionItem === 'ratio' ? null : 'ratio')}
+                                >
+                                  <span className="accordion-header__icon">
+                                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                      <rect x="2.5" y="5" width="15" height="10" rx="1.5" />
+                                    </svg>
+                                  </span>
+                                  <span className="accordion-header__text">
+                                    <span className="accordion-header__title">Cover Layout Ratio</span>
+                                    <span className="accordion-header__current">{customization.coverRatio.replace('-', ':')}</span>
+                                  </span>
+                                  <svg className="accordion-header__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 7.5l5 5 5-5" />
+                                  </svg>
+                                </button>
+                                {activeAccordionItem === 'ratio' && (
+                                  <div className="accordion-body" style={{ display: 'block' }}>
+                                    <div className="accordion-body__inner">
+                                      <p className="accordion-body__desc">Adjust the size ratio of the cover banner image.</p>
+                                      <div className="option-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+                                        {['16-9', '21-9', '4-3', '1-1', 'custom'].map(ratio => (
+                                          <div 
+                                            key={ratio} 
+                                            onClick={() => updateCustomization({ coverRatio: ratio })}
+                                            className={`ratio-card ${customization.coverRatio === ratio ? 'is-selected' : ''}`}
+                                          >
+                                            <div className={`ratio-card__visual ratio-visual-${ratio}`} />
+                                            <span className="option-card__label">{ratio.replace('-', ':')}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Accordion Position */}
+                              <div className={`accordion-item ${activeAccordionItem === 'position' ? 'is-open' : ''}`}>
+                                <button 
+                                  className="accordion-header" 
+                                  type="button"
+                                  onClick={() => setActiveAccordionItem(activeAccordionItem === 'position' ? null : 'position')}
+                                >
+                                  <span className="accordion-header__icon">
+                                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M4 4h12v12H4z" />
+                                      <circle cx="7" cy="7" r="1.6" />
+                                    </svg>
+                                  </span>
+                                  <span className="accordion-header__text">
+                                    <span className="accordion-header__title">Profile Position</span>
+                                    <span className="accordion-header__current">{customization.profilePosition}</span>
+                                  </span>
+                                  <svg className="accordion-header__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 7.5l5 5 5-5" />
+                                  </svg>
+                                </button>
+                                {activeAccordionItem === 'position' && (
+                                  <div className="accordion-body" style={{ display: 'block' }}>
+                                    <div className="accordion-body__inner">
+                                      <p className="accordion-body__desc">Select where your profile picture floats relative to the cover.</p>
+                                      <div className="option-grid">
+                                        {[
+                                          { id: 'overlap', label: 'Overlap Cover' },
+                                          { id: 'center-cover', label: 'Center Cover' },
+                                          { id: 'top-left', label: 'Top Left' },
+                                          { id: 'top-right', label: 'Top Right' },
+                                          { id: 'bottom-left', label: 'Bottom Left' },
+                                          { id: 'bottom-right', label: 'Bottom Right' },
+                                          { id: 'center-screen', label: 'Center Screen' }
+                                        ].map(pos => (
+                                          <div 
+                                            key={pos.id} 
+                                            onClick={() => updateCustomization({ profilePosition: pos.id })}
+                                            className={`option-card ${customization.profilePosition === pos.id ? 'is-selected' : ''}`}
+                                          >
+                                            <span className="option-card__label">{pos.label}</span>
+                                            <div className="option-card__indicator" />
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Style Group: Appearance */}
+                        <div className={`style-group ${activeStyleGroup === 'appearance' ? 'is-active' : ''}`}>
+                          <button 
+                            className="style-group__header" 
+                            type="button" 
+                            onClick={() => setActiveStyleGroup(activeStyleGroup === 'appearance' ? null : 'appearance')}
+                            aria-expanded={activeStyleGroup === 'appearance'}
+                          >
+                            <span className="style-group__icon">
+                              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="10" cy="10" r="6.5" />
+                                <path d="M10 3.5v2M10 14.5v2M3.5 10h2M14.5 10h2" />
+                              </svg>
+                            </span>
+                            <span className="style-group__text">
+                              <span className="style-group__title">Appearance</span>
+                              <span className="style-group__current">Templates &amp; radius</span>
+                            </span>
+                            <svg className="style-group__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 7.5l5 5 5-5" />
+                            </svg>
+                          </button>
+                          {activeStyleGroup === 'appearance' && (
+                            <div className="style-group__body" style={{ display: 'block' }}>
+                              
+                              {/* Accordion Templates */}
+                              <div className={`accordion-item ${activeAccordionItem === 'templates' ? 'is-open' : ''}`}>
+                                <button 
+                                  className="accordion-header" 
+                                  type="button"
+                                  onClick={() => setActiveAccordionItem(activeAccordionItem === 'templates' ? null : 'templates')}
+                                >
+                                  <span className="accordion-header__icon">
+                                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                      <rect x="3" y="3" width="6" height="6" rx="1" />
+                                      <rect x="11" y="3" width="6" height="6" rx="1" />
+                                      <rect x="3" y="11" width="6" height="6" rx="1" />
+                                      <rect x="11" y="11" width="6" height="6" rx="1" />
+                                    </svg>
+                                  </span>
+                                  <span className="accordion-header__text">
+                                    <span className="accordion-header__title">Card Templates</span>
+                                    <span className="accordion-header__current">{customization.cardTemplate}</span>
+                                  </span>
+                                  <svg className="accordion-header__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 7.5l5 5 5-5" />
+                                  </svg>
+                                </button>
+                                {activeAccordionItem === 'templates' && (
+                                  <div className="accordion-body" style={{ display: 'block' }}>
+                                    <div className="accordion-body__inner">
+                                      <p className="accordion-body__desc">Quick-apply typography, radius, and layout presets in one click.</p>
+                                      <div className="option-grid">
+                                        {['modern', 'startup', 'executive', 'luxury', 'creative', 'developer', 'personal'].map(tpl => (
+                                          <div 
+                                            key={tpl} 
+                                            onClick={() => updateCustomization({ cardTemplate: tpl })}
+                                            className={`option-card ${customization.cardTemplate === tpl ? 'is-selected' : ''}`}
+                                          >
+                                            <span className="option-card__label" style={{ textTransform: 'capitalize' }}>{tpl}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Accordion Radius & Button Style */}
+                              <div className={`accordion-item ${activeAccordionItem === 'radius' ? 'is-open' : ''}`}>
+                                <button 
+                                  className="accordion-header" 
+                                  type="button"
+                                  onClick={() => setActiveAccordionItem(activeAccordionItem === 'radius' ? null : 'radius')}
+                                >
+                                  <span className="accordion-header__icon">
+                                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M3 9V7a4 4 0 014-4h2" />
+                                      <rect x="3" y="9" width="14" height="8" rx="2" />
+                                    </svg>
+                                  </span>
+                                  <span className="accordion-header__text">
+                                    <span className="accordion-header__title">Card Radius</span>
+                                    <span className="accordion-header__current">{customization.cardRadius}px</span>
+                                  </span>
+                                  <svg className="accordion-header__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 7.5l5 5 5-5" />
+                                  </svg>
+                                </button>
+                                {activeAccordionItem === 'radius' && (
+                                  <div className="accordion-body" style={{ display: 'block' }}>
+                                    <div className="accordion-body__inner">
+                                      <p className="accordion-body__desc">Determine how rounded the outer edges of your digital card are.</p>
+                                      <div className="slider-container">
+                                        <div className="slider-row">
+                                          <input 
+                                            type="range" 
+                                            className="studio-slider" 
+                                            min="0" 
+                                            max="40" 
+                                            value={customization.cardRadius} 
+                                            onChange={(e) => updateCustomization({ cardRadius: parseInt(e.target.value) })}
+                                          />
+                                          <span className="slider-value">{customization.cardRadius}px</span>
+                                        </div>
+                                        <div className="slider-labels">
+                                          <span>Sharp (0px)</span>
+                                          <span>Modern</span>
+                                          <span>Soft</span>
+                                          <span>Premium (40px)</span>
+                                        </div>
+                                      </div>
+
+                                      <p className="accordion-body__desc" style={{ marginTop: 18 }}>Share button style.</p>
+                                      <div className="option-grid">
+                                        {['solid', 'gradient', 'glass', 'outline', 'dark', 'neon'].map(btn => (
+                                          <div 
+                                            key={btn} 
+                                            onClick={() => updateCustomization({ buttonStyle: btn })}
+                                            className={`option-card ${customization.buttonStyle === btn ? 'is-selected' : ''}`}
+                                          >
+                                            <div className={`mini-button ${btn}`} />
+                                            <span className="option-card__label" style={{ textTransform: 'capitalize' }}>{btn}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Style Group: Effects */}
+                        <div className={`style-group ${activeStyleGroup === 'effects' ? 'is-active' : ''}`}>
+                          <button 
+                            className="style-group__header" 
+                            type="button" 
+                            onClick={() => setActiveStyleGroup(activeStyleGroup === 'effects' ? null : 'effects')}
+                            aria-expanded={activeStyleGroup === 'effects'}
+                          >
+                            <span className="style-group__icon">
+                              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="7" cy="7" r="3" />
+                                <circle cx="13" cy="13" r="3" />
+                              </svg>
+                            </span>
+                            <span className="style-group__text">
+                              <span className="style-group__title">Effects</span>
+                              <span className="style-group__current">Background &amp; motion</span>
+                            </span>
+                            <svg className="style-group__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 7.5l5 5 5-5" />
+                            </svg>
+                          </button>
+                          {activeStyleGroup === 'effects' && (
+                            <div className="style-group__body" style={{ display: 'block' }}>
+                              
+                              {/* Accordion Background Effects */}
+                              <div className={`accordion-item ${activeAccordionItem === 'bg-effects' ? 'is-open' : ''}`}>
+                                <button 
+                                  className="accordion-header" 
+                                  type="button"
+                                  onClick={() => setActiveAccordionItem(activeAccordionItem === 'bg-effects' ? null : 'bg-effects')}
+                                >
+                                  <span className="accordion-header__icon">
+                                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="7" cy="7" r="3" />
+                                      <circle cx="13" cy="13" r="3" />
+                                    </svg>
+                                  </span>
+                                  <span className="accordion-header__text">
+                                    <span className="accordion-header__title">Background Effects</span>
+                                    <span className="accordion-header__current" style={{ textTransform: 'capitalize' }}>{customization.backgroundEffect.replace('-', ' ')}</span>
+                                  </span>
+                                  <svg className="accordion-header__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 7.5l5 5 5-5" />
+                                  </svg>
+                                </button>
+                                {activeAccordionItem === 'bg-effects' && (
+                                  <div className="accordion-body" style={{ display: 'block' }}>
+                                    <div className="accordion-body__inner">
+                                      <p className="accordion-body__desc">Apply interactive backdrops and effects directly to the card body.</p>
+                                      <div className="option-grid">
+                                        {[
+                                          { id: 'solid', label: 'Solid' },
+                                          { id: 'gradient', label: 'Gradient' },
+                                          { id: 'mesh', label: 'Mesh Gradient' },
+                                          { id: 'aurora', label: 'Aurora' },
+                                          { id: 'abstract-shapes', label: 'Floating Shapes' },
+                                          { id: 'glass-blur', label: 'Glass Blur' }
+                                        ].map(eff => (
+                                          <div 
+                                            key={eff.id} 
+                                            onClick={() => updateCustomization({ backgroundEffect: eff.id })}
+                                            className={`option-card ${customization.backgroundEffect === eff.id ? 'is-selected' : ''}`}
+                                          >
+                                            <span className="option-card__label">{eff.label}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+
+                                      <p className="accordion-body__desc" style={{ marginTop: 18 }}>Subtle, premium motion on the preview.</p>
+                                      <div className="toggle-list">
+                                        {[
+                                          { id: 'floating', label: 'Floating Profile', desc: 'Card gently floats in 3D perspective space' },
+                                          { id: 'glow-effects', label: 'Glow Effect', desc: 'Soft glassmorphic glow around the card' },
+                                          { id: 'gradient-movement', label: 'Gradient Motion', desc: 'Slowly shifts background gradients' },
+                                          { id: 'hover-effects', label: 'Hover Effects', desc: 'Elevate the card on mouse hover' },
+                                          { id: 'smooth-transitions', label: 'Smooth Transitions', desc: 'Animate steps and changes seamlessly' }
+                                        ].map(anim => (
+                                          <div key={anim.id} className="toggle-row">
+                                            <div className="toggle-row__info">
+                                              <span className="toggle-row__label">{anim.label}</span>
+                                              <span className="toggle-row__desc">{anim.desc}</span>
+                                            </div>
+                                            <label className="switch-wrap">
+                                              <input 
+                                                type="checkbox" 
+                                                className="anim-toggle" 
+                                                checked={customization.animations[anim.id as keyof typeof customization.animations] || false}
+                                                onChange={(e) => updateAnimation(anim.id, e.target.checked)}
+                                              />
+                                              <span className="switch-slider" />
+                                            </label>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Style Group: Typography */}
+                        <div className={`style-group ${activeStyleGroup === 'typography' ? 'is-active' : ''}`}>
+                          <button 
+                            className="style-group__header" 
+                            type="button" 
+                            onClick={() => setActiveStyleGroup(activeStyleGroup === 'typography' ? null : 'typography')}
+                            aria-expanded={activeStyleGroup === 'typography'}
+                          >
+                            <span className="style-group__icon">
+                              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M5 5h10M10 5v10M7 15h6" />
+                              </svg>
+                            </span>
+                            <span className="style-group__text">
+                              <span className="style-group__title">Typography</span>
+                              <span className="style-group__current">{customization.typography}</span>
+                            </span>
+                            <svg className="style-group__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 7.5l5 5 5-5" />
+                            </svg>
+                          </button>
+                          {activeStyleGroup === 'typography' && (
+                            <div className="style-group__body" style={{ display: 'block' }}>
+                              
+                              {/* Accordion Typography */}
+                              <div className={`accordion-item ${activeAccordionItem === 'typography' ? 'is-open' : ''}`}>
+                                <button 
+                                  className="accordion-header" 
+                                  type="button"
+                                  onClick={() => setActiveAccordionItem(activeAccordionItem === 'typography' ? null : 'typography')}
+                                >
+                                  <span className="accordion-header__icon">
+                                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M5 5h10M10 5v10M7 15h6" />
+                                    </svg>
+                                  </span>
+                                  <span className="accordion-header__text">
+                                    <span className="accordion-header__title">Typography</span>
+                                    <span className="accordion-header__current">{customization.typography}</span>
+                                  </span>
+                                  <svg className="accordion-header__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 7.5l5 5 5-5" />
+                                  </svg>
+                                </button>
+                                {activeAccordionItem === 'typography' && (
+                                  <div className="accordion-body" style={{ display: 'block' }}>
+                                    <div className="accordion-body__inner">
+                                      <p className="accordion-body__desc">Typography accent for your card.</p>
+                                      <div className="option-grid" style={{ gridTemplateColumns: 'repeat(2, 1fr)' }}>
+                                        {[
+                                          { font: 'DM Sans', preview: 'Modern and balanced' },
+                                          { font: 'Inter', preview: 'Sleek tech interface' },
+                                          { font: 'Poppins', preview: 'Bold geometric elegance' },
+                                          { font: 'Manrope', preview: 'Clean corporate type' },
+                                          { font: 'Playfair Display', preview: 'High luxury editorial' },
+                                          { font: 'Plus Jakarta Sans', preview: 'Vibrant start-up feel' }
+                                        ].map(f => (
+                                          <div 
+                                            key={f.font} 
+                                            onClick={() => updateCustomization({ typography: f.font })}
+                                            className={`font-btn ${customization.typography === f.font ? 'is-selected' : ''}`}
+                                            style={{ fontFamily: `"${f.font}", sans-serif` }}
+                                          >
+                                            <span className="font-btn__name">{f.font === 'Plus Jakarta Sans' ? 'Plus Jakarta' : f.font}</span>
+                                            <span className="font-btn__preview">{f.preview}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Style Group: Branding */}
+                        <div className={`style-group ${activeStyleGroup === 'branding' ? 'is-active' : ''}`}>
+                          <button 
+                            className="style-group__header" 
+                            type="button" 
+                            onClick={() => setActiveStyleGroup(activeStyleGroup === 'branding' ? null : 'branding')}
+                            aria-expanded={activeStyleGroup === 'branding'}
+                          >
+                            <span className="style-group__icon">
+                              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="10" cy="10" r="6.5" />
+                                <path d="M10 6.5v3.2l2.2 2.2" />
+                              </svg>
+                            </span>
+                            <span className="style-group__text">
+                              <span className="style-group__title">Branding</span>
+                              <span className="style-group__current">Shape &amp; logo</span>
+                            </span>
+                            <svg className="style-group__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 7.5l5 5 5-5" />
+                            </svg>
+                          </button>
+                          {activeStyleGroup === 'branding' && (
+                            <div className="style-group__body" style={{ display: 'block' }}>
+                              
+                              {/* Accordion Shape & Border */}
+                              <div className={`accordion-item ${activeAccordionItem === 'shape' ? 'is-open' : ''}`}>
+                                <button 
+                                  className="accordion-header" 
+                                  type="button"
+                                  onClick={() => setActiveAccordionItem(activeAccordionItem === 'shape' ? null : 'shape')}
+                                >
+                                  <span className="accordion-header__icon">
+                                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                      <circle cx="10" cy="10" r="6.5" />
+                                    </svg>
+                                  </span>
+                                  <span className="accordion-header__text">
+                                    <span className="accordion-header__title">Profile Photo Shape</span>
+                                    <span className="accordion-header__current" style={{ textTransform: 'capitalize' }}>{customization.profileShape.replace('-', ' ')}</span>
+                                  </span>
+                                  <svg className="accordion-header__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 7.5l5 5 5-5" />
+                                  </svg>
+                                </button>
+                                {activeAccordionItem === 'shape' && (
+                                  <div className="accordion-body" style={{ display: 'block' }}>
+                                    <div className="accordion-body__inner">
+                                      <p className="accordion-body__desc">Choose the outline shape of your profile picture.</p>
+                                      <div className="option-grid">
+                                        {[
+                                          { id: 'circle', label: 'Circle' },
+                                          { id: 'rounded-square', label: 'Rounded Sq' },
+                                          { id: 'square', label: 'Square' },
+                                          { id: 'hexagon', label: 'Hexagon' },
+                                          { id: 'diamond', label: 'Diamond' },
+                                          { id: 'premium-frame', label: 'Premium Frame' }
+                                        ].map(shape => (
+                                          <div 
+                                            key={shape.id} 
+                                            onClick={() => updateCustomization({ profileShape: shape.id })}
+                                            className={`option-card ${customization.profileShape === shape.id ? 'is-selected' : ''}`}
+                                          >
+                                            <div className={`mini-shape ${shape.id}`} />
+                                            <span className="option-card__label">{shape.label}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+
+                                      <p className="accordion-body__desc" style={{ marginTop: 18 }}>Profile border treatment.</p>
+                                      <div className="option-grid">
+                                        {[
+                                          { id: 'none', label: 'No Border' },
+                                          { id: 'white', label: 'White' },
+                                          { id: 'gradient', label: 'Gradient' },
+                                          { id: 'glow', label: 'Glow' },
+                                          { id: 'premium-ring', label: 'Premium Ring' }
+                                        ].map(border => (
+                                          <div 
+                                            key={border.id} 
+                                            onClick={() => updateCustomization({ profileBorder: border.id })}
+                                            className={`option-card ${customization.profileBorder === border.id ? 'is-selected' : ''}`}
+                                          >
+                                            <div className={`mini-border ${border.id}`} />
+                                            <span className="option-card__label">{border.label}</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Accordion Logo Position */}
+                              <div className={`accordion-item ${activeAccordionItem === 'logo-position' ? 'is-open' : ''}`}>
+                                <button 
+                                  className="accordion-header" 
+                                  type="button"
+                                  onClick={() => setActiveAccordionItem(activeAccordionItem === 'logo-position' ? null : 'logo-position')}
+                                >
+                                  <span className="accordion-header__icon">
+                                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                                      <rect x="3" y="4" width="14" height="12" rx="1.5" />
+                                      <path d="M6 8h2M6 11h6" />
+                                    </svg>
+                                  </span>
+                                  <span className="accordion-header__text">
+                                    <span className="accordion-header__title">Logo Position</span>
+                                    <span className="accordion-header__current" style={{ textTransform: 'capitalize' }}>{customization.logoPosition}</span>
+                                  </span>
+                                  <svg className="accordion-header__chev" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M5 7.5l5 5 5-5" />
+                                  </svg>
+                                </button>
+                                {activeAccordionItem === 'logo-position' && (
+                                  <div className="accordion-body" style={{ display: 'block' }}>
+                                    <div className="accordion-body__inner">
+                                      <p className="accordion-body__desc">Determine where the company logo badge is aligned.</p>
+                                      <div className="option-grid">
+                                        {[
+                                          { id: 'top-left', label: 'Top Left' },
+                                          { id: 'top-right', label: 'Top Right' },
+                                          { id: 'center', label: 'Center' },
+                                          { id: 'bottom-left', label: 'Bottom Left' },
+                                          { id: 'bottom-right', label: 'Bottom Right' },
+                                          { id: 'hidden', label: 'Hidden' }
+                                        ].map(pos => (
+                                          <div 
+                                            key={pos.id} 
+                                            onClick={() => updateCustomization({ logoPosition: pos.id })}
+                                            className={`option-card ${customization.logoPosition === pos.id ? 'is-selected' : ''}`}
+                                          >
+                                            <span className="option-card__label">{pos.label}</span>
+                                            <div className="option-card__indicator" />
+                                          </div>
+                                        ))}
+                                      </div>
+
+                                      <p className="accordion-body__desc" style={{ marginTop: 18 }}>Logo size.</p>
+                                      <div className="slider-container">
+                                        <div className="slider-row">
+                                          <input 
+                                            type="range" 
+                                            className="studio-slider" 
+                                            min="50" 
+                                            max="150" 
+                                            value={customization.logoSize} 
+                                            onChange={(e) => updateCustomization({ logoSize: parseInt(e.target.value) })}
+                                          />
+                                          <span className="slider-value">{customization.logoSize}%</span>
+                                        </div>
+                                        <div className="slider-labels">
+                                          <span>50%</span>
+                                          <span>150%</span>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                            </div>
+                          )}
+                        </div>
+
                       </div>
-                      <div className="image-tile__name">Cover Photo</div>
-                      <div className="image-tile__desc">Add a cover photo that represents your brand.</div>
                     </div>
-                    <div className="image-tile__drop">
-                      {renderIcon('plus')}
-                      <span className="image-tile__drop-text">Drag &amp; drop or click to upload</span>
-                      <span className="image-tile__drop-sub">Max size: 10MB</span>
-                    </div>
-                    {coverUrl && coverUrl !== DEFAULT_COVER_URL && (
-                      <div className="image-tile__preview has-img">
-                        <img src={coverUrl} alt="Cover" />
-                        <button onClick={(e) => removeImage('cover', e)} className="image-tile__remove" type="button">×</button>
-                      </div>
-                    )}
+                  )}
+
+                  {/* Continue Button */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
+                    <button 
+                      onClick={() => setCurrentStep(2)}
+                      className="btn-primary" 
+                      id="step1ContinueBtn" 
+                      type="button" 
+                      style={{ width: '100%', justifyContent: 'center', padding: '14px 28px' }}
+                    >
+                      Continue to Style
+                      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 10h12M11 5l5 5-5 5" />
+                      </svg>
+                    </button>
                   </div>
 
                 </div>
-                <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" hidden />
-              </div>
 
-              <div className="secure-bar">
-                <div className="secure-bar__left">
-                  <div className="secure-bar__icon">{renderIcon('check')}</div>
-                  <div>
-                    <div className="secure-bar__title">Secure &amp; Private</div>
-                    <div className="secure-bar__text">Your images are encrypted and stored securely.<br />We never share your data.</div>
-                  </div>
-                </div>
-                <button onClick={() => setCurrentStep(2)} className="btn-primary" type="button">
-                  Continue
-                  {renderIcon('plus', { style: { transform: 'rotate(-45deg)', width: 15, height: 15 } })}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: Brand Accent Color */}
-          {currentStep === 2 && (
-            <div className="step-panel is-active">
-              <div className="panel brand-panel-container">
-                
-                {/* Brand color */}
-                <div className="brand-section">
-                  <h4 className="brand-section-title">Brand color</h4>
-                  <div className="color-picker-wrap">
-                    <div className="hue-slider-wrap">
-                      <input type="range" className="hue-slider" onChange={handleSliderChange} min="0" max="360" value={hexToHue(applyInstantly ? brandColor : pendingBrandColor)} />
-                      <div className="hue-thumb" style={{ left: `${hexToHue(applyInstantly ? brandColor : pendingBrandColor) / 360 * 100}%`, background: applyInstantly ? brandColor : pendingBrandColor }} />
+                {/* Right Panel: AI Design Suggestions */}
+                <div className="studio-right">
+                  <div className="studio-section" style={{ position: 'sticky', top: 16 }}>
+                    <div className="studio-section__header">
+                      <span className="studio-section__title">✨ AI Design Studio</span>
                     </div>
-                    <div className="color-meta-row">
-                      <div className="color-preview-swatch" style={{ background: applyInstantly ? brandColor : pendingBrandColor }} />
-                      <input className="color-hex-input" value={applyInstantly ? brandColor : pendingBrandColor} onChange={handleHexChange} maxLength={7} spellCheck={false} />
-                      {typeof window !== 'undefined' && 'EyeDropper' in window && (
-                        <button className="eyedropper-btn" onClick={handleEyedropper} type="button" title="Pick color from screen">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="m2 22 1-1c.5-.5.5-1.3 0-1.8L16.2 6.4c1.1-1.1 2.9-1.1 4 0l.4.4c1.1 1.1 1.1 2.9 0 4L7.8 23c-.5.5-1.3.5-1.8 0Z" />
-                            <path d="m14 4 6 6" />
-                            <path d="m5 17-3 3" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    <div className="preset-swatches">
-                      {BRAND_SWATCHES.map((hex) => (
-                        <button key={hex} onClick={() => handleSwatchClick(hex)} className={`swatch ${ (applyInstantly ? brandColor : pendingBrandColor).toLowerCase() === hex.toLowerCase() ? 'is-selected' : '' }`} style={{ background: hex }} title={hex} />
+                    <p className="studio-section__desc">Select curated layout configurations to instantly transform your card.</p>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                      {AI_PRESETS.map(preset => (
+                        <div key={preset.id} className="ai-preset-card">
+                          <div className="ai-preset-card__header">
+                            <span className="ai-preset-card__title">{preset.title}</span>
+                            <span className="ai-preset-card__badge">{preset.badge}</span>
+                          </div>
+                          <div className="ai-preset-card__tags">
+                            {preset.tags.map(t => (
+                              <span key={t} className="ai-preset-card__tag">{t}</span>
+                            ))}
+                          </div>
+                          <button 
+                            type="button" 
+                            className="ai-preset-card__btn"
+                            onClick={() => handleAiPresetClick(preset)}
+                          >
+                            Apply Design
+                          </button>
+                        </div>
                       ))}
                     </div>
                   </div>
                 </div>
 
-                {/* Popular gradients */}
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: Brand */}
+          {currentStep === 2 && (
+            <div className="step-panel is-active" id="stepPanel2">
+              <div className="panel brand-panel-container">
+                
+                {/* Brand Color Section */}
+                <div className="brand-section">
+                  <h4 className="brand-section-title brand-color-title">Brand color</h4>
+                  <div className="color-picker-wrap">
+                    <div className="hue-slider-wrap">
+                      <input 
+                        type="range" 
+                        className="hue-slider" 
+                        min="0" 
+                        max="360" 
+                        value={hexToHue(applyInstantly ? brandColor : pendingBrandColor)} 
+                        onChange={handleSliderChange}
+                      />
+                      <div 
+                        className="hue-thumb" 
+                        style={{ left: `${(hexToHue(applyInstantly ? brandColor : pendingBrandColor) / 360) * 100}%` }} 
+                      />
+                    </div>
+                    <div className="color-meta-row">
+                      <div 
+                        className="color-preview-swatch" 
+                        style={{ backgroundColor: applyInstantly ? brandColor : pendingBrandColor }} 
+                      />
+                      <input 
+                        className="color-hex-input" 
+                        value={applyInstantly ? brandColor : pendingBrandColor} 
+                        onChange={handleHexChange} 
+                        maxLength={7} 
+                        spellCheck="false" 
+                      />
+                      <button 
+                        onClick={handleEyedropper}
+                        className="eyedropper-btn" 
+                        type="button" 
+                        title="Pick color from screen"
+                      >
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                          <path d="m2 22 1-1c.5-.5.5-1.3 0-1.8L16.2 6.4c1.1-1.1 2.9-1.1 4 0l.4.4c1.1 1.1 1.1 2.9 0 4L7.8 23c-.5.5-1.3.5-1.8 0Z" />
+                          <path d="m14 4 6 6" />
+                          <path d="m5 17-3 3" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="preset-swatches">
+                      {BRAND_SWATCHES.map(hex => (
+                        <button 
+                          key={hex}
+                          onClick={() => handleSwatchClick(hex)}
+                          className={`swatch-btn ${(applyInstantly ? brandColor : pendingBrandColor).toLowerCase() === hex.toLowerCase() ? 'is-active' : ''}`}
+                          style={{ backgroundColor: hex }}
+                          type="button"
+                          aria-label={`Select color ${hex}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Popular Gradients Section */}
                 <div className="brand-section">
                   <h4 className="brand-section-title">Popular gradients</h4>
                   <div className="gradient-grid">
-                    {POPULAR_GRADIENTS.map((grad) => {
-                      const activeId = applyInstantly ? activeGradientId : pendingGradientId;
+                    {POPULAR_GRADIENTS.map(grad => {
+                      const isSelected = applyInstantly ? (activeGradientId === grad.id) : (pendingGradientId === grad.id);
                       return (
-                        <div key={grad.id} className={`gradient-card ${activeId === grad.id ? 'is-selected' : ''}`} onClick={() => handleGradientClick(grad)}>
-                          <div className="gradient-card__preview" style={{ background: grad.gradient }}>
-                            <div className="gradient-card__badge">{renderIcon('check')}</div>
-                          </div>
-                          <div className="gradient-card__name">{grad.name}</div>
+                        <div 
+                          key={grad.id}
+                          onClick={() => handleGradientClick(grad)}
+                          className={`gradient-card ${isSelected ? 'is-selected' : ''}`}
+                        >
+                          <div className="gradient-thumb" style={{ background: grad.gradient }} />
+                          <span className="gradient-name">{grad.name}</span>
                         </div>
                       );
                     })}
                   </div>
                 </div>
 
-                {/* Card Templates */}
+                {/* Card Style Templates Section */}
                 <div className="brand-section">
                   <h4 className="brand-section-title">Card style templates</h4>
                   <div className="template-grid">
-                    {STYLE_TEMPLATES.map((temp) => {
-                      const activeId = applyInstantly ? activeTemplateId : pendingTemplateId;
-                      let gradString = '';
-                      if (temp.gradientId) {
-                        const gObj = POPULAR_GRADIENTS.find(g => g.id === temp.gradientId);
-                        gradString = gObj ? gObj.gradient : '';
-                      } else {
-                        gradString = temp.gradient || '';
-                      }
-
+                    {STYLE_TEMPLATES.map(temp => {
+                      const isSelected = applyInstantly ? (activeTemplateId === temp.id) : (pendingTemplateId === temp.id);
+                      const grad = POPULAR_GRADIENTS.find(g => g.id === temp.gradientId);
+                      const bgStyle = temp.gradient 
+                        ? temp.gradient 
+                        : (grad ? grad.gradient : temp.accent);
                       return (
-                        <div key={temp.id} className={`template-card ${activeId === temp.id ? 'is-selected' : ''}`} onClick={() => handleTemplateClick(temp)}>
-                          <div className="mini-card">
-                            <div className="mini-card__hero" style={{ background: gradString }}>
-                              <div className="mini-card__avatar">
-                                <img src={profileUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=200'} alt="" />
-                              </div>
-                            </div>
-                            <div className="mini-card__body">
-                              <div className="mini-card__line mini-card__line--name" />
-                              <div className="mini-card__line mini-card__line--1" />
-                              <div className="mini-card__line mini-card__line--2" />
-                            </div>
-                            <button className="mini-card__btn" style={{ background: temp.accent }} type="button">
-                              Share Card
-                            </button>
-                          </div>
-                          <div className="template-card__badge">{renderIcon('check')}</div>
-                          <div className="template-card__name">{temp.name}</div>
+                        <div 
+                          key={temp.id}
+                          onClick={() => handleTemplateClick(temp)}
+                          className={`template-card ${isSelected ? 'is-selected' : ''}`}
+                        >
+                          <div className="template-thumb" style={{ background: bgStyle }} />
+                          <span className="template-name">{temp.name}</span>
                         </div>
                       );
                     })}
@@ -1360,7 +2473,11 @@ export default function CreateCardPage() {
               <footer className="step-nav">
                 <div className="toggle-container">
                   <label className="switch-wrap">
-                    <input type="checkbox" checked={applyInstantly} onChange={handleApplyToggle} />
+                    <input 
+                      type="checkbox" 
+                      checked={applyInstantly} 
+                      onChange={handleApplyToggle}
+                    />
                     <span className="switch-slider" />
                   </label>
                   <div className="toggle-text-wrap">
@@ -1372,7 +2489,9 @@ export default function CreateCardPage() {
                   <button onClick={() => setCurrentStep(1)} className="btn-secondary" type="button">Back</button>
                   <button onClick={handleStep2Continue} className="btn-primary" type="button">
                     Continue
-                    {renderIcon('plus', { style: { transform: 'rotate(-45deg)', width: 15, height: 15 } })}
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 10h12M11 5l5 5-5 5" />
+                    </svg>
                   </button>
                 </div>
               </footer>
